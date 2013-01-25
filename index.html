@@ -1,0 +1,112 @@
+<html>
+<head>
+<script type="text/javascript" src="jquery-1.7.2.min.js"></script>
+
+
+<script type="text/javascript">
+      var db;
+      function init() {
+          db = openDatabase("DB Prueba", "0.1", "Database Prueba", 200000);
+          if (db) {
+              // Database opened
+              db.transaction( function(tx) {
+                  tx.executeSql("CREATE TABLE IF NOT EXISTS usuarios(userid integer primary key autoincrement, username text, password text)")
+              });
+          }
+   
+          listUsers();
+   
+      }
+   
+      function showUsers(users) {
+          var place = document.getElementById("usersDiv");
+          if (place.getElementsByTagName("ul").length > 0 )
+              place.removeChild(place.getElementsByTagName("ul")[0]);
+          var list = document.createElement("ul");
+   
+          for ( var i = 0; i < users.length; i++) {
+              var item = document.createElement("li");
+              item.innerHTML += "<b>Usuario:</b>"
+                      + users[i][1] + "<button onclick='removeUser("+ users[i][0]+")'>Remove</button>";
+              list.appendChild(item);
+          }
+          place.appendChild(list);
+      }	
+   
+      function listUsers() {
+          db.transaction( function(tx) {
+              tx.executeSql("SELECT * FROM usuarios", [],
+                  function(tx, result){
+                      var output = [];
+                      for(var i=0; i < result.rows.length; i++) {
+                          output.push([result.rows.item(i)['userid'],
+                                  result.rows.item(i)['username'],
+                                  result.rows.item(i)['password']]);
+                      }
+   
+                      showUsers(output);
+   
+                  });
+          });
+      }
+   
+      function addUser(username, password) {
+          db.transaction( function(tx) {
+              tx.executeSql("INSERT INTO usuarios(username, password) VALUES(?,?)", [username, password]);
+          });
+          listUsers();
+      }
+   
+      function removeUser(userId) {
+          db.transaction(function(tx) {
+              tx.executeSql("DELETE FROM usuarios WHERE userId=?",[userId], listUsers);
+          })
+      }
+  </script>
+</head>
+
+<body onLoad="init()">
+<div id="usersDiv">
+<h4>Enviar Servidor Jaime Carrasquero </h4>
+<div> 
+&nbsp;<a href="usuarios.html">usuarios</a></div>
+<div><input type='button' id='php' value='enviar servidor'></div>
+
+<!-- div donde se mostrara el resultado mediante javascript o ajax -->
+<div id="resultado"></div>
+
+<script type='text/javascript'>
+
+$("#php").click(function(){
+  
+/* rutina para enviar los registros al servidor */
+
+          db.transaction( function(txx) {
+              txx.executeSql("SELECT * FROM usuarios", [],
+                  function(txx, resultt){
+                      for(var ii=0; ii < resultt.rows.length; ii++) {
+                          //output.push([result.rows.item(i)['userid'],
+                           //       result.rows.item(i)['username'],
+                            //      result.rows.item(i)['password']]);
+  					//var nombre_user = result.rows.item(i)['username'];
+  					//var nombre_user = result.rows.item(i)['username'];
+  					var nombre_user = resultt.rows.item(ii)['username'];
+  					document.write(nombre_user);
+  								
+    /* Enviamos a la pagina ajax.php el valor del input de la pagina lubpven.dyndns.info    192.168.1.50 */
+    $.post("http://190.111.121.89:8282/lubpvenmovil/insertar.php", {value:nombre_user}, function(data){
+
+    }, "json");
+
+                      }
+
+                  });
+          });
+  		
+  		
+  		
+  		
+});
+</script>
+</body>
+</html>
